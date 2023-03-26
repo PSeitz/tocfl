@@ -1,6 +1,6 @@
 [package]
 name = "tocfl"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "Chinese TOCFL vocabulary by levels"
 keywords = ["TOCFL", "chinese", "traditional-chinese", "dictionary" ]
@@ -13,6 +13,7 @@ license = "MIT"
 
 [dependencies]
 calamine = "0.19.1"
+prettify_pinyin = "1.1.2"
 serde = { version = "1.0.156", features = ["derive"] }
 serde_json = "1.0.94"
 

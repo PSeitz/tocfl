@@ -78,12 +78,12 @@ fn convert(file: &str, workbook_name: &str, out_file: &str) -> Result<(), Error>
     Ok(())
 }
 
-fn remove_non_digits(input: &str) -> Option<u64> {
+fn remove_non_digits(input: &str) -> Option<u32> {
     let digits: String = input.chars().filter(|c| c.is_digit(10)).collect();
     if digits.is_empty() {
         None
     } else {
-        digits.parse::<u64>().ok()
+        digits.parse::<u32>().ok()
     }
 }
 
