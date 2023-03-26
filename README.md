@@ -1,4 +1,4 @@
-#TOCFL
+# TOCFL
 
 The Test of Chinese as a Foreign Language (TOCFL) (Chinese: 華語文能力測驗; pinyin: Huáyǔwén Nénglì Cèyàn) is a standardized test of Taiwanese Mandarin language
 proficiency for non-native speakers, including foreign students.
@@ -22,7 +22,7 @@ It also provides pinyin to differentiate same char with different meaning pronou
 ### Characters
 Taiwan Chinese Language Proficiency Benchmark Chinese Character List_111-09-20.xlsx
 
-#Other
+# Other
 https://github.com/tomcumming/tocfl-word-list also provides TOCFL lists, but seems to be incomplete (or outdated).
 The source used to compile the list is not entirely clear.
 
