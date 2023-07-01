@@ -63,6 +63,20 @@ impl<V> TOCFLDictionary<V> {
             .or(self.hashmap.get(&(traditional.to_string(), "".to_string())))
     }
 
+    /// Get an entry for its traditional + [&pinyin] combination
+    pub fn get_entry_multiple(&self, traditional: &str, pinyin: &[&str]) -> Option<&V> {
+        for pinyin in pinyin {
+            if let Some(entry) = self
+                .hashmap
+                .get(&(traditional.to_string(), normalize_pinyin(pinyin)))
+            {
+                return Some(entry);
+            }
+        }
+        //fallback remove pinyin
+        self.hashmap.get(&(traditional.to_string(), "".to_string()))
+    }
+
     /// Iterator over all entries
     pub fn iter(&self) -> impl Iterator<Item = &V> + '_ {
         self.hashmap.values()
@@ -77,20 +91,22 @@ pub fn compile_common_chars() -> TOCFLDictionary<u64> {
 
     let hashmap = dict.hashmap;
 
-    let mut cha_to_pinyin = HashMap::new();
+    let mut cha_to_pinyin: HashMap<char, Vec<String>> = HashMap::new();
     for (word, pinyin) in hashmap.keys() {
         if word.chars().count() != 1 {
             continue;
         }
         for cha in word.chars() {
-            cha_to_pinyin.entry(cha).or_insert(pinyin.to_string());
+            let pinyins = cha_to_pinyin.entry(cha).or_default();
+
+            pinyins.push(pinyin.to_string());
         }
     }
 
     // We add the word parts to the chars, although single chars may be not that common
     // e.g. 午 on its own is uncommon, but 下午 [xiawu] is quite common
     let mut char_hash_map = HashMap::new();
-    let empty_fall_back = "".to_string();
+    let empty_fall_back = vec![];
     for ((word, _pinyin), v) in hashmap.iter() {
         if word.chars().count() <= 1 {
             continue;
@@ -98,9 +114,23 @@ pub fn compile_common_chars() -> TOCFLDictionary<u64> {
         // TODO tokenize _pinyin and use that would be better
         for cha in word.chars() {
             let pinyin = cha_to_pinyin.get(&cha).unwrap_or(&empty_fall_back);
-            let key = (cha.to_string(), remove_whitespace(pinyin.to_string()));
-            let entry = char_hash_map.entry(key).or_insert_with(Default::default);
-            *entry += v.written_per_million;
+            if pinyin.len() == 1 {
+                let pinyin = &pinyin[0];
+                let key = (cha.to_string(), remove_whitespace(pinyin.to_string()));
+                let entry = char_hash_map.entry(key).or_insert_with(Default::default);
+                *entry += v.written_per_million;
+
+                // Add empty fallback
+                let key = (cha.to_string(), "".to_string());
+                let entry = char_hash_map.entry(key).or_insert_with(Default::default);
+                *entry += v.written_per_million;
+            }
+            if pinyin.is_empty() {
+                // Add empty fallback
+                let key = (cha.to_string(), "".to_string());
+                let entry = char_hash_map.entry(key).or_insert_with(Default::default);
+                *entry += v.written_per_million;
+            }
         }
     }
     TOCFLDictionary {
@@ -114,14 +144,17 @@ pub fn load_tocfl_dictionary() -> TOCFLDictionary<Entry> {
         .lines()
         .flat_map(|line| {
             let entry: Entry = serde_json::from_str(line).unwrap();
-            let mut first = vec![(entry.text.to_string(), entry.pinyin.to_string())];
+            let mut first_and_pinyin_fallback = vec![
+                (entry.text.to_string(), entry.pinyin.to_string()),
+                (entry.text.to_string(), "".to_string()),
+            ];
             let other = entry
                 .text_alt
                 .iter()
                 .map(ToString::to_string)
                 .zip(entry.pinyin_alt.iter().map(ToString::to_string));
-            first.extend(other);
-            first
+            first_and_pinyin_fallback.extend(other);
+            first_and_pinyin_fallback
                 .into_iter()
                 .map(move |(chin, pin)| ((chin.to_string(), remove_whitespace(pin)), entry.clone()))
         })
