@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use std::collections::HashMap;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct Entry {
     /// Ordinal
     pub id: u64,
@@ -55,12 +55,16 @@ fn normalize_pinyin(pinyin: &str) -> String {
 }
 
 impl<V> TOCFLDictionary<V> {
-    /// Get an entry for its traditional + pinyin combination
+    /// Get an entry for its traditional chinese character + pinyin combination
+    /// Prefer to use this to differentiate between different characters that have multiple pronounciations
     pub fn get_entry(&self, traditional: &str, pinyin: &str) -> Option<&V> {
         self.hashmap
             .get(&(traditional.to_string(), normalize_pinyin(pinyin)))
-            //fallback remove pinyin
-            .or(self.hashmap.get(&(traditional.to_string(), "".to_string())))
+    }
+
+    /// Get an entry for its traditional chinese character
+    pub fn get_entry_no_pinyin(&self, traditional: &str) -> Option<&V> {
+        self.hashmap.get(&(traditional.to_string(), "".to_string()))
     }
 
     /// Get an entry for its traditional + [&pinyin] combination
@@ -183,4 +187,12 @@ fn entry_test4() {
     load_tocfl_dictionary()
         .get_entry("安靜", "ān jìng")
         .unwrap();
+}
+#[test]
+fn entry_test_fen1() {
+    load_tocfl_dictionary().get_entry("分", "fēn").unwrap();
+}
+#[test]
+fn entry_test_fen2() {
+    assert_eq!(load_tocfl_dictionary().get_entry("分", "fèn"), None);
 }
