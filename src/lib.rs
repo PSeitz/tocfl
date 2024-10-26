@@ -1,3 +1,4 @@
+use pinyin::ToPinyin;
 use prettify_pinyin::prettify;
 use serde::{Deserialize, Serialize};
 
@@ -50,13 +51,21 @@ fn remove_whitespace(mut s: String) -> String {
 
 fn normalize_pinyin(pinyin: &str) -> String {
     let normalized: String = prettify(pinyin.to_string());
-    let normalized = remove_whitespace(normalized);
-    normalized
+
+    remove_whitespace(normalized)
 }
 
 impl<V> TOCFLDictionary<V> {
     /// Get an entry for its traditional chinese character + pinyin combination
     /// Prefer to use this to differentiate between different characters that have multiple pronounciations
+    ///
+    /// Note that some characters have multiple pronounciations, e.g. 分 fēn and fèn
+    ///
+    /// The pinyin can have the format "yì" or "yi4"
+    ///
+    /// # Limitation
+    /// Note that some characters don't have a pinyin, e.g. 食.
+    ///
     pub fn get_entry(&self, traditional: &str, pinyin: &str) -> Option<&V> {
         self.hashmap
             .get(&(traditional.to_string(), normalize_pinyin(pinyin)))
@@ -89,12 +98,13 @@ impl<V> TOCFLDictionary<V> {
 
 /// Compile a hashmap of `HashMap<(Char, Pinyin), CountPerMillion>` by building a commonness HashMap of chars from words
 ///
-/// Those chars may not be common as themselves
+/// Those chars may not be common themselves and may be more common in words
 pub fn compile_common_chars() -> TOCFLDictionary<u64> {
     let dict = load_tocfl_dictionary();
 
     let hashmap = dict.hashmap;
 
+    // Note that we only add pinyin if there is only on character
     let mut cha_to_pinyin: HashMap<char, Vec<String>> = HashMap::new();
     for (word, pinyin) in hashmap.keys() {
         if word.chars().count() != 1 {
@@ -115,28 +125,32 @@ pub fn compile_common_chars() -> TOCFLDictionary<u64> {
         if word.chars().count() <= 1 {
             continue;
         }
+        let mut add_entry = |cha: char, pinyin: &str| {
+            let key = (cha.to_string(), remove_whitespace(pinyin.to_string()));
+            let entry = char_hash_map.entry(key).or_insert_with(Default::default);
+            *entry += v.written_per_million;
+        };
         // TODO tokenize _pinyin and use that would be better
         for cha in word.chars() {
             let pinyin = cha_to_pinyin.get(&cha).unwrap_or(&empty_fall_back);
             if pinyin.len() == 1 {
                 let pinyin = &pinyin[0];
-                let key = (cha.to_string(), remove_whitespace(pinyin.to_string()));
-                let entry = char_hash_map.entry(key).or_insert_with(Default::default);
-                *entry += v.written_per_million;
+                add_entry(cha, &remove_whitespace(pinyin.to_string()));
 
                 // Add empty fallback
-                let key = (cha.to_string(), "".to_string());
-                let entry = char_hash_map.entry(key).or_insert_with(Default::default);
-                *entry += v.written_per_million;
+                add_entry(cha, "");
             }
             if pinyin.is_empty() {
                 // Add empty fallback
-                let key = (cha.to_string(), "".to_string());
-                let entry = char_hash_map.entry(key).or_insert_with(Default::default);
-                *entry += v.written_per_million;
+                add_entry(cha, "");
+                // Add default from character to pinyin conversion
+                if let Some(pinyin) = cha.to_pinyin() {
+                    add_entry(cha, pinyin.with_tone());
+                }
             }
         }
     }
+
     TOCFLDictionary {
         hashmap: char_hash_map,
     }
@@ -166,6 +180,13 @@ pub fn load_tocfl_dictionary() -> TOCFLDictionary<Entry> {
 
     TOCFLDictionary { hashmap }
 }
+#[test]
+fn test_normalize() {
+    assert_eq!(normalize_pinyin("yì shì"), "yìshì");
+    assert_eq!(normalize_pinyin("yi4 shi4"), "yìshì");
+    // For that we need a tokenizer
+    //assert_eq!(normalize_pinyin("yi4shi4"), "yìshì");
+}
 
 #[test]
 fn entry_test1() {
@@ -175,6 +196,21 @@ fn entry_test1() {
 #[test]
 fn entry_test2() {
     load_tocfl_dictionary().get_entry("爸爸", "bà ba").unwrap();
+}
+
+#[test]
+fn entry_awareness() {
+    //dbg!(load_tocfl_dictionary().get_entry_no_pinyin("意識").unwrap());
+
+    load_tocfl_dictionary().get_entry("意識", "yì shì").unwrap();
+    load_tocfl_dictionary().get_entry("意識", "yìshì").unwrap();
+
+    load_tocfl_dictionary()
+        .get_entry("意識", "yi4 shi4")
+        .unwrap();
+    //load_tocfl_dictionary()
+    //.get_entry("意識", "yi4shi4")
+    //.unwrap();
 }
 
 #[test]
@@ -191,8 +227,26 @@ fn entry_test4() {
 #[test]
 fn entry_test_fen1() {
     load_tocfl_dictionary().get_entry("分", "fēn").unwrap();
+    load_tocfl_dictionary().get_entry("分", "fen1").unwrap();
 }
+#[test]
+fn entry_test_pian_yi() {
+    dbg!(load_tocfl_dictionary().get_entry_no_pinyin("便宜").unwrap());
+}
+
 #[test]
 fn entry_test_fen2() {
     assert_eq!(load_tocfl_dictionary().get_entry("分", "fèn"), None);
+}
+
+#[test]
+fn entry_test_taberu() {
+    assert_eq!(compile_common_chars().get_entry_no_pinyin("食"), Some(&712));
+    assert_eq!(compile_common_chars().get_entry("食", "shí"), Some(&712));
+}
+
+#[test]
+fn entry_test_hui_meeting() {
+    assert_eq!(compile_common_chars().get_entry("繪", "hui4"), Some(&120));
+    assert_eq!(compile_common_chars().get_entry_no_pinyin("繪"), Some(&120));
 }

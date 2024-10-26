@@ -79,7 +79,7 @@ fn convert(file: &str, workbook_name: &str, out_file: &str) -> Result<(), Error>
 }
 
 fn remove_non_digits(input: &str) -> Option<u32> {
-    let digits: String = input.chars().filter(|c| c.is_digit(10)).collect();
+    let digits: String = input.chars().filter(|c| c.is_ascii_digit()).collect();
     if digits.is_empty() {
         None
     } else {
@@ -96,7 +96,7 @@ fn remove_non_digits(input: &str) -> Option<u32> {
 // 14061	著3	精熟	第7級		4017	1760	[['著', ['29560', '29632', '29651', '30743', '30817']]]	ㄓㄠˊ	Y"和
 fn normalize(rows: &mut Vec<Entry>) {
     let average_written_per_million_by_tocfl_level =
-        average_written_per_million_by_tocfl_level(&rows);
+        average_written_per_million_by_tocfl_level(rows);
 
     // some entries have a number after the character.
     // We don't want that number
@@ -121,7 +121,7 @@ fn remove_digits(string: &str) -> (String, bool) {
     let filtered_chars: String = string
         .chars()
         .filter(|c| {
-            if c.is_digit(10) {
+            if c.is_ascii_digit() {
                 has_digit = true;
                 false
             } else {
@@ -134,12 +134,12 @@ fn remove_digits(string: &str) -> (String, bool) {
 }
 
 fn average_written_per_million_by_tocfl_level(rows: &[Entry]) -> Vec<u64> {
-    let mut sum_written_per_million = vec![0; 8];
-    let mut count_by_tocfl_level = vec![0; 8];
+    let mut sum_written_per_million = [0; 8];
+    let mut count_by_tocfl_level = [0; 8];
 
     for row in rows {
         let level = row.tocfl_level as usize;
-        if level >= 1 && level <= 7 {
+        if (1..=7).contains(&level) {
             sum_written_per_million[level] += row.written_per_million;
             count_by_tocfl_level[level] += 1;
         }

@@ -112,6 +112,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "pinyin"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "16f2611cd06a1ac239a0cea4521de9eb068a6ca110324ee00631aa68daa74fc0"
+
+[[package]]
 name = "prettify_pinyin"
 version = "1.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -195,9 +201,10 @@ dependencies = [
 
 [[package]]
 name = "tocfl"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "calamine",
+ "pinyin",
  "prettify_pinyin",
  "serde",
  "serde_json",
