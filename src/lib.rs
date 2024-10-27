@@ -113,6 +113,9 @@ pub fn compile_common_chars() -> TOCFLDictionary<u64> {
         for cha in word.chars() {
             let pinyins = cha_to_pinyin.entry(cha).or_default();
 
+            if pinyin.trim().is_empty() {
+                continue;
+            }
             pinyins.push(pinyin.to_string());
         }
     }
@@ -133,6 +136,7 @@ pub fn compile_common_chars() -> TOCFLDictionary<u64> {
         // TODO tokenize _pinyin and use that would be better
         for cha in word.chars() {
             let pinyin = cha_to_pinyin.get(&cha).unwrap_or(&empty_fall_back);
+
             if pinyin.len() == 1 {
                 let pinyin = &pinyin[0];
                 add_entry(cha, &remove_whitespace(pinyin.to_string()));
@@ -246,7 +250,16 @@ fn entry_test_taberu() {
 }
 
 #[test]
-fn entry_test_hui_meeting() {
+fn entry_test_hui_painting() {
     assert_eq!(compile_common_chars().get_entry("繪", "hui4"), Some(&120));
     assert_eq!(compile_common_chars().get_entry_no_pinyin("繪"), Some(&120));
+}
+
+#[test]
+fn entry_test_hui_meeting() {
+    assert_eq!(compile_common_chars().get_entry("會", "hui4"), Some(&3624));
+    assert_eq!(
+        compile_common_chars().get_entry_no_pinyin("會"),
+        Some(&3624)
+    );
 }
