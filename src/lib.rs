@@ -160,6 +160,9 @@ pub fn compile_common_chars() -> TOCFLDictionary<u64> {
     }
 }
 
+/// Load the TOCFL dictionary.
+///
+/// This is the main entry point to the dictionary.
 pub fn load_tocfl_dictionary() -> TOCFLDictionary<Entry> {
     let rows = include_str!("../tocfl_words.json");
     let hashmap: HashMap<(String, String), Entry> = rows
@@ -261,5 +264,23 @@ fn entry_test_hui_meeting() {
     assert_eq!(
         compile_common_chars().get_entry_no_pinyin("會"),
         Some(&3624)
+    );
+}
+
+#[test]
+fn entry_test_qi_lai() {
+    //assert_eq!(
+    //load_tocfl_dictionary()
+    //.get_entry("起來", "qǐ lai")
+    //.unwrap()
+    //.written_per_million,
+    //1
+    //);
+    assert_eq!(
+        load_tocfl_dictionary()
+            .get_entry_no_pinyin("起來")
+            .unwrap()
+            .written_per_million,
+        465
     );
 }

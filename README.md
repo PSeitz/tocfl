@@ -11,8 +11,6 @@ This repo provides a dataset based on (linked from the official TOCFL website):
 [Excel Sheet](https://coct.naer.edu.tw/download/tech_report/%E8%87%BA%E7%81%A3%E8%8F%AF%E8%AA%9E%E6%96%87%E8%83%BD%E5%8A%9B%E5%9F%BA%E6%BA%96%E8%A9%9E%E8%AA%9E%E8%A1%A8_111-11-14.xlsx)
 
 
-
-
 ### Vocabulary
 Taiwan Chinese Language Proficiency Benchmark Vocabulary List_111-11-14.xlsx
 
