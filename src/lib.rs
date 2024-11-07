@@ -4,6 +4,11 @@ use serde::{Deserialize, Serialize};
 
 use std::collections::HashMap;
 
+/// The TOCFLDictionary with entries for words
+pub type TOCFLDictWords = TOCFLDictionary<Entry>;
+/// The TOCFLDictionary with entries for characters
+pub type TOCFLDictChar = TOCFLDictionary<u64>;
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct Entry {
     /// Ordinal
@@ -99,7 +104,7 @@ impl<V> TOCFLDictionary<V> {
 /// Compile a hashmap of `HashMap<(Char, Pinyin), CountPerMillion>` by building a commonness HashMap of chars from words
 ///
 /// Those chars may not be common themselves and may be more common in words
-pub fn compile_common_chars() -> TOCFLDictionary<u64> {
+pub fn compile_common_chars() -> TOCFLDictChar {
     let dict = load_tocfl_dictionary();
 
     let hashmap = dict.hashmap;
@@ -163,7 +168,7 @@ pub fn compile_common_chars() -> TOCFLDictionary<u64> {
 /// Load the TOCFL dictionary.
 ///
 /// This is the main entry point to the dictionary.
-pub fn load_tocfl_dictionary() -> TOCFLDictionary<Entry> {
+pub fn load_tocfl_dictionary() -> TOCFLDictWords {
     let rows = include_str!("../tocfl_words.json");
     let hashmap: HashMap<(String, String), Entry> = rows
         .lines()
