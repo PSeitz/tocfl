@@ -29,14 +29,14 @@ pub struct Entry {
     /// e.g. [['的', ['7457', '8310', '8568']]]
     pub components: String,
 
-    /// Zhuyin
+    /// Zhuyin of [Entry::text].
     pub zhuyin: String,
-    /// Pinyin Other Variants
+    /// Other Variants of Zhuyin if available
     pub zhuyin_alt: Vec<String>,
 
-    /// Pinyin
+    /// Pinyin of [Entry::text].
     pub pinyin: String,
-    /// Pinyin Other Variants
+    /// Other Variants of Pinyin if available
     pub pinyin_alt: Vec<String>,
 }
 

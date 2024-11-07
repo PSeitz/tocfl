@@ -14,7 +14,7 @@ This repo provides a dataset based on (linked from the official TOCFL website):
 ### Vocabulary
 Taiwan Chinese Language Proficiency Benchmark Vocabulary List_111-11-14.xlsx
 
-The vocabulary list is great, it gives frequency for written AND spoken.
+The vocabulary list is great, it gives *frequency* for written AND spoken.
 It also provides pinyin to differentiate same char with different meaning pronounciation.
 
 ### Characters
